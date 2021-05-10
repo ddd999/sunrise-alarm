@@ -1,5 +1,5 @@
 // Sunrise Alarm Clock v0.001
-// February 21, 2021
+// May 10, 2021
 
 const uint8_t FWVERSION = 0;
 
@@ -43,7 +43,7 @@ void handleEvent(AceButton*, uint8_t, uint8_t);
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <RTClib.h>
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 10, 13, 2, 15);
+DateTime alarm1 = DateTime(2021, 5, 10, 13, 12, 0);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
 
@@ -182,12 +182,6 @@ void loop() {
     sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
     Serial.print("Current time: ");
     Serial.println(timestring);
-
-//    DateTime tomorrow = rtc.now() + TS_one_day;
-//    sprintf(timestring,"%2d:%02d:%02d\t\t",tomorrow.year(),tomorrow.month(),tomorrow.day());
-//    Serial.print("Tomorrow: ");
-//    Serial.println(timestring);
-
     
     Serial.print("Alarm1 state: ");
     Serial.println(alarmstates[alarm1_fsm_state]);
@@ -198,18 +192,6 @@ void loop() {
     Serial.println(alarm1.year());
     Serial.println(alarm1.month());
     Serial.println(alarm1.day());
-
-    Serial.print("Snoozes: ");
-    Serial.println(snoozecounter);
-    
-    Serial.print("  Sunrise duration: ");
-    Serial.println(sunrise_duration_minutes);
-    
-    //Serial.print("Alarm1 days: ");
-    //Serial.println(alarmdays[alarm1days]);
-
-//    Serial.print("Alarm2 state: ");
-//    Serial.println(alarmstates[alarm2_fsm_state]);
 
     sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
     Serial.print("Alarm2 time: ");
@@ -273,9 +255,12 @@ void loop() {
         
       // don't do anything if there is a button press during a visual ring
       if(button_status.CLICK){
-        //FOR DEBUGGING
-        alarm1_fsm_state = ALARM_AUDIO_RING;
         button_status.CLICK = 0;
+        
+        #ifdef DEBUG
+        //Allow skipping to the next step to save time debugging
+          alarm1_fsm_state = ALARM_AUDIO_RING;
+        #endif
       }
       if(button_status.LONGPRESS){
         button_status.LONGPRESS = 0;
@@ -300,7 +285,6 @@ void loop() {
         strip.show();
 
         // Set the alarm for the same time tomorrow after it's acknowledged
-        //DateTime newalarmtime;
         alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1);
         
@@ -327,7 +311,6 @@ void loop() {
         strip.show();
         
        // Set the alarm for the same time tomorrow
-        //DateTime newalarmtime;
         alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1);
         

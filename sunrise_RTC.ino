@@ -10,16 +10,13 @@ void rtc_setup() {
   }
 
   // Set date and time to the computer time at compilation
-//  rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(7));
+//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(7));
 
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, let's set the time!");
     // When time needs to be set on a new device, or after a power loss, the
     // following line sets the RTC to the date & time this sketch was compiled
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(6));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
 
   //we don't need the 32K Pin, so disable it
@@ -82,19 +79,9 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime){
 
 int32_t rtc_get_seconds_since_alarm(DateTime alarmtime){
     char timestring[8],alarmstring[8];
-    
-//    Serial.println(__func__);
     DateTime now = rtc.now();
-//
-//    sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
-//    Serial.print("\tTime now: ");
-//    Serial.println(timestring);
-//
-//    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarmtime.hour(),alarmtime.minute(),alarmtime.second());
-//    Serial.print("\tAlarm time: ");
-//    Serial.println(alarmstring);
-    
     TimeSpan timeSinceAlarm = now - alarmtime;
+
     int32_t seconds_since_alarm = timeSinceAlarm.totalseconds();
 
     return seconds_since_alarm;
