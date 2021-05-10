@@ -42,7 +42,6 @@ void rtc_setup() {
 
 void rtc_display_current_time() {
     uint8_t day,hour,minute;
-    
     DateTime now = rtc.now();
     day = now.day();
     hour = now.hour();
@@ -67,7 +66,7 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime){
     if(alarm_number == 1) {
       rtc.clearAlarm(1);
       // Alarm when hours, minutes and seconds match, regardless of day
-      rtc.setAlarm1(alarm1, DS3231_A1_Hour); 
+      rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
       alarm1set = 1;
     }
     else if(alarm_number = 2) {
@@ -82,7 +81,19 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime){
 }
 
 int32_t rtc_get_seconds_since_alarm(DateTime alarmtime){
+    char timestring[8],alarmstring[8];
+    
+//    Serial.println(__func__);
     DateTime now = rtc.now();
+//
+//    sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
+//    Serial.print("\tTime now: ");
+//    Serial.println(timestring);
+//
+//    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarmtime.hour(),alarmtime.minute(),alarmtime.second());
+//    Serial.print("\tAlarm time: ");
+//    Serial.println(alarmstring);
+    
     TimeSpan timeSinceAlarm = now - alarmtime;
     int32_t seconds_since_alarm = timeSinceAlarm.totalseconds();
 

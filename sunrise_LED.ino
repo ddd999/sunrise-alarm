@@ -49,7 +49,7 @@ void led_visual_ring(DateTime alarmtime){
   if (current_temp >= finish_temp) current_temp = finish_temp;
   
   Serial.print("Seconds since alarm: ");
-  Serial.print(seconds_since_alarm, DEC);
+  Serial.print(seconds_since_alarm);
   Serial.println("s");
 
   Serial.print("Kelvin: ");

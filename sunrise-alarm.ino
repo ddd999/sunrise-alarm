@@ -1,7 +1,7 @@
 // Sunrise Alarm Clock v0.001
 // February 21, 2021
 
-const uint8_t FWVERSION = 1;
+const uint8_t FWVERSION = 0;
 
 #define DEBUG
 
@@ -43,9 +43,12 @@ void handleEvent(AceButton*, uint8_t, uint8_t);
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <RTClib.h>
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 3, 7, 22, 19, 45);
+DateTime alarm1 = DateTime(2021, 5, 10, 13, 2, 15);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
+
+// TimeSpan(days, hours, minutes, seconds)
+TimeSpan TS_one_day = TimeSpan(1,0,0,0);
 
 bool alarm1set = 1;
 bool alarm2set = 1;
@@ -180,19 +183,35 @@ void loop() {
     Serial.print("Current time: ");
     Serial.println(timestring);
 
+//    DateTime tomorrow = rtc.now() + TS_one_day;
+//    sprintf(timestring,"%2d:%02d:%02d\t\t",tomorrow.year(),tomorrow.month(),tomorrow.day());
+//    Serial.print("Tomorrow: ");
+//    Serial.println(timestring);
+
+    
     Serial.print("Alarm1 state: ");
     Serial.println(alarmstates[alarm1_fsm_state]);
     
-    sprintf(alarmstring,"%2d:%02d\t\t",alarm1.hour(),alarm1.minute());
+    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second());
     Serial.print("Alarm1 time: ");
-    Serial.print(alarmstring);
-    Serial.print("Alarm1 days: ");
-    Serial.println(alarmdays[alarm1days]);
+    Serial.println(alarmstring);
+    Serial.println(alarm1.year());
+    Serial.println(alarm1.month());
+    Serial.println(alarm1.day());
+
+    Serial.print("Snoozes: ");
+    Serial.println(snoozecounter);
+    
+    Serial.print("  Sunrise duration: ");
+    Serial.println(sunrise_duration_minutes);
+    
+    //Serial.print("Alarm1 days: ");
+    //Serial.println(alarmdays[alarm1days]);
 
 //    Serial.print("Alarm2 state: ");
 //    Serial.println(alarmstates[alarm2_fsm_state]);
 
-    sprintf(alarmstring,"%2d:%02d\t\t",alarm2.hour(),alarm2.minute());
+    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
     Serial.print("Alarm2 time: ");
     Serial.print(alarmstring);
     Serial.print("Alarm2 days: ");
@@ -229,11 +248,13 @@ void loop() {
   
   // Alarm state machine
   switch(alarm1_fsm_state){
+    
     case ALARM_IDLE:
       if (alarm1set) {
         alarm1_fsm_state = ALARM_SET;
       }
       break;
+      
     case ALARM_SET:
       if(rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
@@ -244,27 +265,23 @@ void loop() {
         menu_loop();
       }
       break;
+      
     case ALARM_VISUAL_RING:
-        if(rtc_get_seconds_since_alarm(alarm1) >= (sunrise_duration_minutes * 60) ){
+      if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
         alarm1_fsm_state = ALARM_AUDIO_RING;
-        }
-
+      }
+        
+      // don't do anything if there is a button press during a visual ring
       if(button_status.CLICK){
+        //FOR DEBUGGING
+        alarm1_fsm_state = ALARM_AUDIO_RING;
         button_status.CLICK = 0;
       }
       if(button_status.LONGPRESS){
         button_status.LONGPRESS = 0;
-        
-        strip.setBrightness(0);
-        strip.show();
-        
-        rtc_set_alarm(1,alarm1);
-        
-        alarm1_fsm_state = ALARM_SET;
-        digitalWrite(LED_BUILTIN,LOW);
-        digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
       }
-      break;
+    break;
+
     case ALARM_AUDIO_RING:
       
       if(button_status.CLICK){
@@ -281,7 +298,10 @@ void loop() {
         
         strip.setBrightness(0);
         strip.show();
-        
+
+        // Set the alarm for the same time tomorrow after it's acknowledged
+        //DateTime newalarmtime;
+        alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1);
         
         alarm1_fsm_state = ALARM_SET;
@@ -293,12 +313,11 @@ void loop() {
     case ALARM_SNOOZING:
       if(button_status.CLICK){
         button_status.CLICK = 0;
-        //snoozecounter += 1;
       }
       
       if(snoozecounter > snoozemaxtimes){
         Serial.println("No more snoozing!");
-        alarm1_fsm_state = ALARM_VISUAL_RING;
+        alarm1_fsm_state = ALARM_AUDIO_RING;
       }
 
       if(button_status.LONGPRESS){
@@ -307,14 +326,15 @@ void loop() {
         strip.setBrightness(0);
         strip.show();
         
+       // Set the alarm for the same time tomorrow
+        //DateTime newalarmtime;
+        alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1);
         
         alarm1_fsm_state = ALARM_SET;
         digitalWrite(LED_BUILTIN,LOW);
         digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
       }
-      break;
-    default:
       break;
   }
 }
