@@ -169,43 +169,47 @@ void loop() {
     previousMillis = currentMillis;
 
     // Update the clock display
-    rtc_display_current_time();
-
-    DateTime now = rtc.now();
-    sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
-    Serial.print("Current time: ");
-    Serial.println(timestring);
+    rtc_display_current_time(); 
     
-    Serial.print("Alarm1 state: ");
-    Serial.println(alarmstates[alarm1_fsm_state]);
-
-    Serial.print("alarm1set: ");
-    Serial.println(alarm1set);
-
-    Serial.print("alarm2set: ");
-    Serial.println(alarm2set);
-    
-    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second());
-    Serial.print("Alarm1 time: ");
-    Serial.println(alarmstring);
-    Serial.println(alarm1.year());
-    Serial.println(alarm1.month());
-    Serial.println(alarm1.day());
-
-    sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
-    Serial.print("Alarm2 time: ");
-    Serial.print(alarmstring);
-    Serial.print("Alarm2 days: ");
-    Serial.println(alarmdays[alarm2days]);
+  #ifdef DEBUG
+      DateTime now = rtc.now();
+      sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
+      Serial.print("Current time: ");
+      Serial.println(timestring);
+      
+      Serial.print("Alarm1 state: ");
+      Serial.println(alarmstates[alarm1_fsm_state]);
+  
+      Serial.print("alarm1set: ");
+      Serial.println(alarm1set);
+  
+      Serial.print("alarm2set: ");
+      Serial.println(alarm2set);
+      
+      sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second());
+      Serial.print("Alarm1 time: ");
+      Serial.println(alarmstring);
+      Serial.println(alarm1.year());
+      Serial.println(alarm1.month());
+      Serial.println(alarm1.day());
+  
+      sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
+      Serial.print("Alarm2 time: ");
+      Serial.print(alarmstring);
+      Serial.print("Alarm2 days: ");
+      Serial.println(alarmdays[alarm2days]);
+  #endif
 
     if(alarm1_fsm_state == ALARM_VISUAL_RING){
       led_visual_ring(alarm1);
       }
 
     if(alarm1_fsm_state == ALARM_AUDIO_RING){
-      digitalWrite(LED_BUILTIN,HIGH);
+      // Trigger audio
       digitalWrite(AUDIO_TRIGGER_OUT,LOW);
-      Serial.println("AUDIO RING. TIME TO WAKE UP, SUCKER!");
+      #ifdef DEBUG
+        Serial.println("AUDIO RING. TIME TO WAKE UP, SUCKER!");
+      #endif
     }
 
     if(alarm1_fsm_state == ALARM_SNOOZING){
@@ -305,7 +309,8 @@ void loop() {
         rtc_set_alarm(1,alarm1);
         
         alarm1_fsm_state = ALARM_SET;
-        digitalWrite(LED_BUILTIN,LOW);
+
+        // Stop triggering audio
         digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
       }
       break;
@@ -316,7 +321,9 @@ void loop() {
       }
       
       if(snoozecounter > snoozemaxtimes){
-        Serial.println("No more snoozing!");
+        #ifdef DEBUG
+          Serial.println("No more snoozing!");
+        #endif
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
 
@@ -329,9 +336,10 @@ void loop() {
        // Set the alarm for the same time tomorrow
         alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1);
-        
+
         alarm1_fsm_state = ALARM_SET;
-        digitalWrite(LED_BUILTIN,LOW);
+
+        // Stop triggering audio
         digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
       }
       break;

@@ -71,7 +71,9 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime){
       alarm2set = 1;
     }
     else{
-      Serial.println("Invalid alarm number specified. No alarm set.");
+      #ifdef DEBUG
+        Serial.println("Invalid alarm number specified. No alarm set.");
+      #endif
     }
 }
 
@@ -87,23 +89,26 @@ int32_t rtc_get_seconds_since_alarm(DateTime alarmtime){
 
 void alarm_snooze(){
   
-  // Use built-in LED as a stand-in for the audio alarm
-  digitalWrite(LED_BUILTIN,LOW);
+  // Stop audio triggers
   digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
-  
-  Serial.println(__func__);
-  Serial.print("Snooze interval (s): ");
 
-  Serial.print(snoozemin * 60);
-  Serial.print("\tSnooze counter: ");
-  Serial.print(snoozecounter);
-  Serial.print("\tMax snoozes: ");
-  Serial.println(snoozemaxtimes);
+  #ifdef DEBUG
+    Serial.println(__func__);
+    Serial.print("Snooze interval (s): ");
+  
+    Serial.print(snoozemin * 60);
+    Serial.print("\tSnooze counter: ");
+    Serial.print(snoozecounter);
+    Serial.print("\tMax snoozes: ");
+    Serial.println(snoozemaxtimes);
+  #endif
   
   int32_t timesnoozing = rtc_get_seconds_since_alarm(snoozestart);
 
-  Serial.print("Elapsed snooze time (s): ");
-  Serial.println(timesnoozing);
+  #ifdef DEBUG
+    Serial.print("Elapsed snooze time (s): ");
+    Serial.println(timesnoozing);
+  #endif
 
   if(timesnoozing >= (snoozemin * 60)) alarm1_fsm_state = ALARM_AUDIO_RING;
  
