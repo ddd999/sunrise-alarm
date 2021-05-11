@@ -1,5 +1,3 @@
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-
 void rtc_setup() {
   if (!rtc.begin()) {
     #ifdef DEBUG

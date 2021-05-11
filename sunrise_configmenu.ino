@@ -1,3 +1,18 @@
+// Menu Options
+const uint8_t MENU_SET_TIME     = 0;
+const uint8_t MENU_SET_ALARM1   = 1;
+const uint8_t MENU_SET_ALARM2   = 2;
+const uint8_t MENU_SET_SNOOZE   = 3;
+const uint8_t MENU_EXIT         = 4;
+
+const char *menu_options[] = {
+  "CLOC",
+  "AL 1",
+  "AL 2",
+  "Snoo",
+  "RETN"
+};
+
 bool blinkflag = 0;
 
 void menu_loop(void){
