@@ -1,3 +1,5 @@
+#define DEBUG
+
 void rtc_setup() {
   if (!rtc.begin()) {
     #ifdef DEBUG
@@ -39,6 +41,7 @@ void rtc_display_current_time() {
     uint8_t day,hour,minute;
     DateTime now = rtc.now();
     day = now.day();
+
     hour = now.hour();
     minute = now.minute();
 
@@ -110,7 +113,14 @@ void alarm_snooze(){
     Serial.println(timesnoozing);
   #endif
 
+  #ifdef DEBUG
+    // Use 10 second "minutes" in debug mode
+    if(timesnoozing >= (snoozemin * 10)) alarm1_fsm_state = ALARM_AUDIO_RING;
+  #endif
+  
+  #ifndef DEBUG
   if(timesnoozing >= (snoozemin * 60)) alarm1_fsm_state = ALARM_AUDIO_RING;
+  #endif
  
   return;
 }

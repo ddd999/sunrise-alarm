@@ -44,7 +44,7 @@ struct button_t {
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <RTClib.h>
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 11, 12, 17, 30);
+DateTime alarm1 = DateTime(2021, 5, 11, 23, 34, 0);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
 
@@ -149,9 +149,9 @@ void setup() {
   
   // here we set the direction of pins on the IO expander
   // Alarm Toggle 1
-  ioDevicePinMode(ioExpander, 0, INPUT);
+  ioDevicePinMode(ioExpander, 4, INPUT);
   // Alarm Toggle 2
-  ioDevicePinMode(ioExpander, 1, INPUT);
+  ioDevicePinMode(ioExpander, 5, INPUT);
 
 }
 
@@ -173,6 +173,12 @@ void loop() {
     
   #ifdef DEBUG
       DateTime now = rtc.now();
+
+      uint8_t dayofweek = now.dayOfTheWeek();
+
+      Serial.print("Day of week: ");
+      Serial.println(dayofweek);
+      
       sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
       Serial.print("Current time: ");
       Serial.println(timestring);
@@ -237,10 +243,10 @@ void loop() {
   ioDeviceSync(ioExpander);
 
   // here we read from the IO expander and write to serial.
-  alarm1set = ioDeviceDigitalRead(ioExpander, 0);
-  alarm2set = ioDeviceDigitalRead(ioExpander, 1);
- 
-  // Alarm state machine
+  alarm1set = ioDeviceDigitalRead(ioExpander, 4);
+  alarm2set = ioDeviceDigitalRead(ioExpander, 5);
+
+    // Alarm state machine
   switch(alarm1_fsm_state){
     
     case ALARM_IDLE:
@@ -262,6 +268,9 @@ void loop() {
         rtc.clearAlarm(1);
         alarm1_fsm_state = ALARM_VISUAL_RING;
       }
+      else{
+        break;
+      }
         if (button_status.LONGPRESS){
           clear_button_flags();
         menu_loop();
@@ -276,14 +285,10 @@ void loop() {
       // don't do anything if there is a button press during a visual ring
       if(button_status.CLICK){
         button_status.CLICK = 0;
-        
-        #ifdef DEBUG
-        //Allow skipping to the next step to save time debugging
-          alarm1_fsm_state = ALARM_AUDIO_RING;
-        #endif
       }
       if(button_status.LONGPRESS){
         button_status.LONGPRESS = 0;
+        alarm1_fsm_state = ALARM_AUDIO_RING;
       }
     break;
 
