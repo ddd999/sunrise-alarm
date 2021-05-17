@@ -93,7 +93,8 @@ int32_t rtc_get_seconds_since_alarm(DateTime alarmtime){
 void alarm_snooze(){
   
   // Stop audio triggers
-  digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+  //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+  ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
 
   #ifdef DEBUG
     Serial.println(__func__);

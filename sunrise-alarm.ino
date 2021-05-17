@@ -27,8 +27,8 @@ using namespace ace_button;
 const int BUTTON_PIN = A0;
 AceButton button(BUTTON_PIN);
 
-const int ALARM_TOGGLE_1 = 4;
-const int ALARM_TOGGLE_2 = 5;
+const int ALARM_TOGGLE_1 = 4; // P4 (pin 9) of PCF8574 chip
+const int ALARM_TOGGLE_2 = 5; // P5 (pin 10) of PCF8574 chip
 
 struct button_t {
   bool PRESS        = 0;
@@ -40,14 +40,16 @@ struct button_t {
 } button_status;
 
 // Digital output for audio trigger
-#define AUDIO_TRIGGER_OUT A4
+const int AUDIO_TRIGGER_OUT = 6;  // P6 (pin 11) of PCF8574 chip
+const int audioOn = LOW;
+
 // Analog input for lamp brightness
 #define BRIGHTNESSPIN A3
 
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <RTClib.h>
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 11, 23, 34, 0);
+DateTime alarm1 = DateTime(2021, 5, 17, 07, 57, 30);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
 
@@ -142,8 +144,8 @@ void setup() {
   rtc_setup();
 
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(AUDIO_TRIGGER_OUT, OUTPUT);
-  digitalWrite(AUDIO_TRIGGER_OUT, HIGH);
+//  pinMode(AUDIO_TRIGGER_OUT, OUTPUT);
+  //digitalWrite(AUDIO_TRIGGER_OUT, HIGH);
 
     
   // if using the i2c IO expander we must make sure Wire is initialised.
@@ -155,6 +157,10 @@ void setup() {
   ioDevicePinMode(ioExpander, ALARM_TOGGLE_1, INPUT);
   // Alarm Toggle 2
   ioDevicePinMode(ioExpander, ALARM_TOGGLE_2, INPUT);
+  // Audio Trigger
+  ioDevicePinMode(ioExpander, AUDIO_TRIGGER_OUT, OUTPUT);
+  // Turn audio off immediately to prevent unwanted triggers
+  ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
 
 }
 
@@ -215,7 +221,8 @@ void loop() {
 
     if(alarm1_fsm_state == ALARM_AUDIO_RING){
       // Trigger audio
-      digitalWrite(AUDIO_TRIGGER_OUT,LOW);
+      //digitalWrite(AUDIO_TRIGGER_OUT,LOW);
+      ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, audioOn);
       #ifdef DEBUG
         Serial.println("AUDIO RING. TIME TO WAKE UP, SUCKER!");
       #endif
@@ -289,10 +296,13 @@ void loop() {
       if(button_status.CLICK){
         button_status.CLICK = 0;
       }
+      
+      // Allow long-press during visual ring to skip to audio ring.
       if(button_status.LONGPRESS){
         button_status.LONGPRESS = 0;
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
+      clear_button_flags();
     break;
 
     case ALARM_AUDIO_RING:
@@ -319,8 +329,10 @@ void loop() {
         alarm1_fsm_state = ALARM_SET;
 
         // Stop triggering audio
-        digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+        //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+        ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
       }
+      clear_button_flags();
       break;
       
     case ALARM_SNOOZING:
@@ -348,8 +360,10 @@ void loop() {
         alarm1_fsm_state = ALARM_SET;
 
         // Stop triggering audio
-        digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+        //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+        ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
       }
+      clear_button_flags();
       break;
   }
 }
