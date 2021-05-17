@@ -11,6 +11,9 @@
 #include <Wire.h>
 const uint8_t DISPLAY_ADDRESS1 = 0x71; //This is the default address of the OpenSegment with both solder jumpers open
 
+// Date and time functions using a DS3231 RTC connected via I2C and Wire lib
+#include <RTClib.h>
+
 #include <IoAbstraction.h>
 #include <IoAbstractionWire.h>
 #include <TaskManagerIO.h>
@@ -46,8 +49,6 @@ const int audioOn = LOW;
 // Analog input for lamp brightness
 #define BRIGHTNESSPIN A3
 
-// Date and time functions using a DS3231 RTC connected via I2C and Wire lib
-#include <RTClib.h>
 RTC_DS3231 rtc;
 DateTime alarm1 = DateTime(2021, 5, 17, 07, 57, 30);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
