@@ -27,6 +27,9 @@ using namespace ace_button;
 const int BUTTON_PIN = A0;
 AceButton button(BUTTON_PIN);
 
+const int ALARM_TOGGLE_1 = 4;
+const int ALARM_TOGGLE_2 = 5;
+
 struct button_t {
   bool PRESS        = 0;
   bool RELEASE      = 0;
@@ -149,9 +152,9 @@ void setup() {
   
   // here we set the direction of pins on the IO expander
   // Alarm Toggle 1
-  ioDevicePinMode(ioExpander, 4, INPUT);
+  ioDevicePinMode(ioExpander, ALARM_TOGGLE_1, INPUT);
   // Alarm Toggle 2
-  ioDevicePinMode(ioExpander, 5, INPUT);
+  ioDevicePinMode(ioExpander, ALARM_TOGGLE_2, INPUT);
 
 }
 
@@ -243,8 +246,8 @@ void loop() {
   ioDeviceSync(ioExpander);
 
   // here we read from the IO expander and write to serial.
-  alarm1set = ioDeviceDigitalRead(ioExpander, 4);
-  alarm2set = ioDeviceDigitalRead(ioExpander, 5);
+  alarm1set = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_1);
+  alarm2set = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_2);
 
     // Alarm state machine
   switch(alarm1_fsm_state){
@@ -254,6 +257,7 @@ void loop() {
         rtc_set_alarm(1,alarm1);
         alarm1_fsm_state = ALARM_SET;
       }
+      clear_button_flags();
       break;
       
     case ALARM_SET:
@@ -262,19 +266,18 @@ void loop() {
           rtc.clearAlarm(1);
           rtc.disableAlarm(1);
           alarm1_fsm_state = ALARM_IDLE;
-          break;
       }
       if(rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
         alarm1_fsm_state = ALARM_VISUAL_RING;
       }
-      else{
-        break;
-      }
-        if (button_status.LONGPRESS){
-          clear_button_flags();
+        
+      if (button_status.LONGPRESS){
+        clear_button_flags();
         menu_loop();
       }
+        
+      clear_button_flags();
       break;
       
     case ALARM_VISUAL_RING:
