@@ -1,5 +1,5 @@
 // Sunrise Alarm Clock v0.001
-// May 10, 2021
+// May 19, 2021
 
 #define DEBUG
 
@@ -50,7 +50,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 17, 07, 57, 30);
+DateTime alarm1 = DateTime(2021, 5, 20, 07, 0, 5);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
 
@@ -68,10 +68,10 @@ uint8_t sunrise_led_colour, sunrise_led_brightness = 0;
 // Alarm constants
 const uint8_t MONTOFRI  = 0;
 const uint8_t SEVENDAYS = 1;
-const uint8_t ONEDAY    = 2;
+const uint8_t TOMORROW  = 2;
 
-const char *alarmdays[] = {
-  "Monday to Friday", "Every day", "Single Day"
+const char *alarmdays_string[] = {
+  "Monday to Friday", "Every day", "Tomorrow"
   };
 
 uint8_t alarm1days = MONTOFRI;
@@ -194,25 +194,17 @@ void loop() {
       Serial.println(timestring);
       
       Serial.print("Alarm1 state: ");
-      Serial.println(alarmstates[alarm1_fsm_state]);
-  
+      Serial.print(alarmstates[alarm1_fsm_state]);
+      Serial.print("\t");
       Serial.print("alarm1set: ");
       Serial.println(alarm1set);
-  
-      Serial.print("alarm2set: ");
-      Serial.println(alarm2set);
       
-      sprintf(alarmstring,"%2d:%02d:%02d %02d %02d %02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second(),alarm1.year(),alarm1.month(),alarm1.day());
+      sprintf(alarmstring,"%2d:%02d:%02d  %04d-%02d-%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second(),alarm1.year(),alarm1.month(),alarm1.day());
       Serial.print("Alarm1 time: ");
       Serial.print(alarmstring);
-      Serial.print("Alarm2 days: ");
-      Serial.println(alarmdays[alarm2days]);
-  
-      sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
-      Serial.print("Alarm2 time: ");
-      Serial.print(alarmstring);
-      Serial.print("Alarm2 days: ");
-      Serial.println(alarmdays[alarm2days]);
+      Serial.print("Alarm1 days: ");
+      Serial.println(alarmdays_string[alarm1days]);
+      Serial.println("");
   #endif
 
     if(alarm1_fsm_state == ALARM_VISUAL_RING){
@@ -276,7 +268,16 @@ void loop() {
       }
       if(rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
-        alarm1_fsm_state = ALARM_VISUAL_RING;
+
+        // Check if today is a day that the alarm should ring
+        if(rtc_check_alarm_days(1)){
+          alarm1_fsm_state = ALARM_VISUAL_RING;
+        }
+        else{
+          #ifdef DEBUG
+            Serial.println("Alarm rang but it's a weekend. Doing nothing.");
+          #endif
+        }
       }
         
       if (button_status.LONGPRESS){

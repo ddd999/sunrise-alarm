@@ -12,12 +12,16 @@ void rtc_setup() {
   // Set date and time to the computer time at compilation
 //    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(7));
 
-  if (rtc.lostPower()) {
-    Serial.println("RTC lost power, let's set the time!");
-    // When time needs to be set on a new device, or after a power loss, the
-    // following line sets the RTC to the date & time this sketch was compiled
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(6));
-  }
+//  if (rtc.lostPower()) {
+//    Serial.println("RTC lost power, let's set the time!");
+//    // When time needs to be set on a new device, or after a power loss, the
+//    // following line sets the RTC to the date & time this sketch was compiled
+//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(6));
+//  }
+
+  // This line sets the RTC with an explicit date & time, for example to set
+  // January 21, 2014 at 3am you would call:
+  rtc.adjust(DateTime(2021, 5, 20, 07, 0, 0));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();
@@ -57,26 +61,29 @@ void rtc_display_current_time() {
     Wire.endTransmission();
 }
 
-void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime){
+void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime, uint8_t alarmdays){
     
     snoozecounter = 0;
-    
-    if(alarm_number == 1) {
-      rtc.clearAlarm(1);
-      // Alarm when hours, minutes and seconds match, regardless of day
-      rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
-      alarm1set = 1;
-    }
-    else if(alarm_number = 2) {
-      rtc.clearAlarm(2);
-      // Alarm when day (day of week), hours, and minutes match, regardless of day
-      rtc.setAlarm2(alarm2, DS3231_A2_Hour);
-      alarm2set = 1;
-    }
-    else{
-      #ifdef DEBUG
-        Serial.println("Invalid alarm number specified. No alarm set.");
-      #endif
+      
+    switch(alarm_number){
+		case 1:
+		  rtc.clearAlarm(1);
+		  // Alarm when hours, minutes and seconds match, regardless of day
+		  rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
+		  alarm1days = alarmdays;
+		  alarm1set = 1;
+		  break;
+		case 2:
+		  rtc.clearAlarm(2);
+		  // Alarm when day (day of week), hours, and minutes match, regardless of day
+		  rtc.setAlarm2(alarm2, DS3231_A2_Hour);
+		  alarm2days = alarmdays;
+		  alarm2set = 1;		  
+		  break;
+		default:
+		  #ifdef DEBUG
+			Serial.println("Invalid alarm number specified. No alarm set.");
+		  #endif
     }
 }
 
@@ -88,6 +95,37 @@ int32_t rtc_get_seconds_since_alarm(DateTime alarmtime){
     int32_t seconds_since_alarm = timeSinceAlarm.totalseconds();
 
     return seconds_since_alarm;
+}
+
+uint8_t rtc_check_alarm_days(uint8_t alarm_number){
+
+  DateTime now = rtc.now();
+  uint8_t dayofweek = now.dayOfTheWeek();
+  
+  uint8_t alarm_days;
+
+  uint8_t ring_alarm;
+
+  if (alarm_number == 1) {
+    alarm_days = alarm1days;
+  }
+  else {
+    alarm_days = alarm2days;
+  }
+
+//  if dayofweek is 0 (Sunday) or 6 (Saturday), it's a weekend
+
+//  alarm should NOT go off if:
+// alarm_days is 0 (Mon to Fri) AND dayofweek is a weekend day
+
+  if ((alarm_days == 0) && ((dayofweek == 0)  || (dayofweek == 6))){
+    ring_alarm = 0;
+  }
+  else{
+    ring_alarm = 1;
+  }
+
+  return ring_alarm;
 }
 
 void alarm_snooze(){
