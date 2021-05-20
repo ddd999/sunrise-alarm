@@ -289,7 +289,13 @@ void loop() {
       break;
       
     case ALARM_VISUAL_RING:
-      if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
+      #ifdef DEBUG
+        if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 10) ){
+      #endif
+      
+      #ifndef DEBUG
+        if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
+      #endif
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
         
