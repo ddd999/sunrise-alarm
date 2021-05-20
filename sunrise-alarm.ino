@@ -50,8 +50,9 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 21, 0, 0, 5);
+DateTime alarm1 = DateTime(2021, 5, 22, 8, 19, 0);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
+DateTime alarmstart;
 DateTime snoozestart;
 
 // TimeSpan(days, hours, minutes, seconds)
@@ -68,16 +69,16 @@ uint8_t sunrise_led_colour, sunrise_led_brightness = 0;
 // Alarm constants
 const uint8_t MONTOFRI  = 0;
 const uint8_t SEVENDAYS = 1;
-const uint8_t NEXTDAY  = 2;
+const uint8_t NEXTDAY   = 2;
 
 const char *alarmdays_string[] = {
   "Monday to Friday", "Every day", "One day"
   };
 
-uint8_t alarm1days = NEXTDAY;
+uint8_t alarm1days = MONTOFRI;
 uint8_t alarm2days = MONTOFRI;
 
-uint8_t snoozemin = 1;
+uint8_t snoozemin = 10;
 uint8_t snoozecounter = 0;
 uint8_t snoozemaxtimes = 3;
 
@@ -183,11 +184,6 @@ void loop() {
     
   #ifdef DEBUG
       DateTime now = rtc.now();
-
-      uint8_t dayofweek = now.dayOfTheWeek();
-
-      Serial.print("Day of week: ");
-      Serial.println(dayofweek);
       
       sprintf(timestring,"%2d:%02d:%02d\t\t",now.hour(),now.minute(),now.second());
       Serial.print("Current time: ");
@@ -208,7 +204,7 @@ void loop() {
   #endif
 
     if(alarm1_fsm_state == ALARM_VISUAL_RING){
-      led_visual_ring(alarm1);
+      led_visual_ring(alarmstart);
       }
 
     if(alarm1_fsm_state == ALARM_AUDIO_RING){
@@ -269,6 +265,7 @@ void loop() {
       
       if(rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
+        alarmstart = rtc.now();
       
         // Check if today is a day that the alarm should ring
         if(rtc_check_alarm_days(1)){
@@ -288,7 +285,7 @@ void loop() {
       break;
       
     case ALARM_VISUAL_RING:
-      if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
+      if(rtc_get_seconds_since_alarm(alarmstart) > (sunrise_duration_minutes * 60) ){
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
         

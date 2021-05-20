@@ -10,18 +10,18 @@ void rtc_setup() {
   }
 
   // Set date and time to the computer time at compilation
-//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(7));
+//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
 
 //  if (rtc.lostPower()) {
 //    Serial.println("RTC lost power, let's set the time!");
 //    // When time needs to be set on a new device, or after a power loss, the
 //    // following line sets the RTC to the date & time this sketch was compiled
-//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(6));
+//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
 //  }
 
   // This line sets the RTC with an explicit date & time, for example to set
   // January 21, 2014 at 3am you would call:
-  rtc.adjust(DateTime(2021, 5, 20, 23, 59, 58));
+  rtc.adjust(DateTime(2021, 5, 21, 8, 18, 55));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();
@@ -87,9 +87,7 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime, uint8_t alarmdays){
 		  alarm2enable = 1;		  
 		  break;
 		default:
-		  #ifdef DEBUG
 			Serial.println("Invalid alarm number specified. No alarm set.");
-		  #endif
     }
 }
 
@@ -124,9 +122,11 @@ uint8_t rtc_check_alarm_days(uint8_t alarm_number){
 // alarm_days is 0 (Mon to Fri) AND dayofweek is a weekend day
 
   if ((alarm_days == 0) && ((dayofweek == 0)  || (dayofweek == 6))){
+    Serial.println("It's a weekend. No alarm today.");
     ring_alarm = 0;
   }
   else{
+    Serial.println("It's a weekday. Alarm today.");
     ring_alarm = 1;
   }
 
@@ -156,15 +156,8 @@ void alarm_snooze(){
     Serial.print("Elapsed snooze time (s): ");
     Serial.println(timesnoozing);
   #endif
-
-  #ifdef DEBUG
-    // Use 10 second "minutes" in debug mode
-    if(timesnoozing >= (snoozemin * 10)) alarm1_fsm_state = ALARM_AUDIO_RING;
-  #endif
   
-  #ifndef DEBUG
   if(timesnoozing >= (snoozemin * 60)) alarm1_fsm_state = ALARM_AUDIO_RING;
-  #endif
  
   return;
 }
