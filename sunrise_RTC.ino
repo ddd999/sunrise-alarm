@@ -37,8 +37,8 @@ void rtc_setup() {
   rtc.disableAlarm(1);
   rtc.disableAlarm(2);
 
-  if(alarm1set) rtc_set_alarm(1,alarm1,alarm1days);
-  if(alarm2set) rtc_set_alarm(2,alarm2,alarm2days);
+  if(alarm1enable) rtc_set_alarm(1,alarm1,alarm1days);
+  if(alarm2enable) rtc_set_alarm(2,alarm2,alarm2days);
 }
 
 void rtc_display_current_time() {
@@ -77,14 +77,14 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime, uint8_t alarmdays){
         rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
 		  }
 		  alarm1days = alarmdays;
-		  alarm1set = 1;
+		  alarm1enable = 1;
 		  break;
 		case 2:
 		  rtc.clearAlarm(2);
 		  // Alarm when day (day of week), hours, and minutes match, regardless of day
 		  rtc.setAlarm2(alarm2, DS3231_A2_Hour);
 		  alarm2days = alarmdays;
-		  alarm2set = 1;		  
+		  alarm2enable = 1;		  
 		  break;
 		default:
 		  #ifdef DEBUG

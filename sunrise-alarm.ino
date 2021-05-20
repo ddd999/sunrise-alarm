@@ -59,8 +59,8 @@ TimeSpan TS_one_day = TimeSpan(1,0,0,0);
 
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-uint8_t alarm1set = 0;
-uint8_t alarm2set = 0;
+uint8_t alarm1enable = 0;
+uint8_t alarm2enable = 0;
 
 uint16_t sunrise_duration_minutes = 1;
 uint8_t sunrise_led_colour, sunrise_led_brightness = 0;
@@ -196,8 +196,8 @@ void loop() {
       Serial.print("Alarm1 state: ");
       Serial.print(alarmstates[alarm1_fsm_state]);
       Serial.print("\t");
-      Serial.print("alarm1set: ");
-      Serial.println(alarm1set);
+      Serial.print("alarm1enable: ");
+      Serial.println(alarm1enable);
       
       sprintf(alarmstring,"%2d:%02d:%02d  %04d-%02d-%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second(),alarm1.year(),alarm1.month(),alarm1.day());
       Serial.print("Alarm1 time: ");
@@ -245,14 +245,14 @@ void loop() {
   ioDeviceSync(ioExpander);
 
   // here we read from the IO expander and write to serial.
-  alarm1set = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_1);
-  alarm2set = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_2);
+  alarm1enable = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_1);
+  alarm2enable = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_2);
 
     // Alarm state machine
   switch(alarm1_fsm_state){
     
     case ALARM_IDLE:
-      if (alarm1set) {
+      if (alarm1enable) {
         rtc_set_alarm(1,alarm1,alarm1days);
         alarm1_fsm_state = ALARM_SET;
       }
@@ -261,7 +261,7 @@ void loop() {
       
     case ALARM_SET:
       // Check if the toggle switch has been turned off
-      if (alarm1set != 1){
+      if (alarm1enable != 1){
           rtc.clearAlarm(1);
           rtc.disableAlarm(1);
           alarm1_fsm_state = ALARM_IDLE;
@@ -322,11 +322,18 @@ void loop() {
         strip.setBrightness(0);
         strip.show();
 
-        // Set the alarm for the same time NEXTDAY after it's acknowledged
-        alarm1 = alarm1 + TS_one_day;
-        rtc_set_alarm(1,alarm1,alarm1days);
         
-        alarm1_fsm_state = ALARM_SET;
+        // Set the alarm for the same time tomorrow
+        // if it wasn't set only for a single day
+        if(alarm1days != NEXTDAY){        
+          // Set the alarm for the same time NEXTDAY after it's acknowledged
+          alarm1 = alarm1 + TS_one_day;
+          rtc_set_alarm(1,alarm1,alarm1days);
+          alarm1_fsm_state = ALARM_SET;
+        }
+        else{
+          alarm1_fsm_state = ALARM_IDLE;
+        }
 
         // Stop triggering audio
         //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
@@ -354,11 +361,16 @@ void loop() {
         strip.show();
         
        // Set the alarm for the same time tomorrow
-        alarm1 = alarm1 + TS_one_day;
-        rtc_set_alarm(1,alarm1,alarm1days);
-
-        alarm1_fsm_state = ALARM_SET;
-
+       // if it wasn't set only for a single day
+       if(alarm1days != NEXTDAY){
+          alarm1 = alarm1 + TS_one_day;
+          rtc_set_alarm(1,alarm1,alarm1days);
+          alarm1_fsm_state = ALARM_SET;
+          }
+       else{
+          alarm1_fsm_state = ALARM_IDLE;
+          }
+          
         // Stop triggering audio
         //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
         ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
