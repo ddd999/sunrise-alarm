@@ -21,7 +21,7 @@ void rtc_setup() {
 
   // This line sets the RTC with an explicit date & time, for example to set
   // January 21, 2014 at 3am you would call:
-  rtc.adjust(DateTime(2021, 5, 22, 07, 0, 0));
+  rtc.adjust(DateTime(2021, 5, 20, 23, 59, 58));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();
@@ -68,8 +68,14 @@ void rtc_set_alarm(uint8_t alarm_number,DateTime alarmtime, uint8_t alarmdays){
     switch(alarm_number){
 		case 1:
 		  rtc.clearAlarm(1);
-		  // Alarm when hours, minutes and seconds match, regardless of day
-		  rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
+		  // Set alarm for the next day only
+		  if (alarm1days == NEXTDAY){
+        rtc.setAlarm1(alarmtime, DS3231_A1_Date);
+		  }
+      // Alarm when hours, minutes and seconds match, regardless of day
+		  else{
+        rtc.setAlarm1(alarmtime, DS3231_A1_Hour); 
+		  }
 		  alarm1days = alarmdays;
 		  alarm1set = 1;
 		  break;
@@ -114,7 +120,6 @@ uint8_t rtc_check_alarm_days(uint8_t alarm_number){
   }
 
 //  if dayofweek is 0 (Sunday) or 6 (Saturday), it's a weekend
-
 //  alarm should NOT go off if:
 // alarm_days is 0 (Mon to Fri) AND dayofweek is a weekend day
 

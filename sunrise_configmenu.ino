@@ -205,9 +205,11 @@ if(!button_status.RELEASE){
     // Get days only if we are setting an alarm
     if(clockalarmsnooze == ALARM1){
       alarm1days = get_alarm_days();
+      if(alarm1days == NEXTDAY) day +=1;
     }
     else if(clockalarmsnooze == ALARM2){
       alarm2days = get_alarm_days();
+      if(alarm2days == NEXTDAY) day +=1;
     }
 
   switch(clockalarmsnooze){

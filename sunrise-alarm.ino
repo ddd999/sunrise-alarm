@@ -50,7 +50,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 20, 07, 0, 5);
+DateTime alarm1 = DateTime(2021, 5, 21, 0, 0, 5);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime snoozestart;
 
@@ -68,13 +68,13 @@ uint8_t sunrise_led_colour, sunrise_led_brightness = 0;
 // Alarm constants
 const uint8_t MONTOFRI  = 0;
 const uint8_t SEVENDAYS = 1;
-const uint8_t TOMORROW  = 2;
+const uint8_t NEXTDAY  = 2;
 
 const char *alarmdays_string[] = {
-  "Monday to Friday", "Every day", "Tomorrow"
+  "Monday to Friday", "Every day", "One day"
   };
 
-uint8_t alarm1days = MONTOFRI;
+uint8_t alarm1days = NEXTDAY;
 uint8_t alarm2days = MONTOFRI;
 
 uint8_t snoozemin = 1;
@@ -131,7 +131,7 @@ void led_visual_ring(DateTime);
 void button_setup();
 void rtc_setup();
 void rtc_display_current_time();
-
+void lamp_update(void);
 
 void setup() {
 
@@ -261,22 +261,21 @@ void loop() {
       
     case ALARM_SET:
       // Check if the toggle switch has been turned off
-      if ((alarm1set != 1)){
+      if (alarm1set != 1){
           rtc.clearAlarm(1);
           rtc.disableAlarm(1);
           alarm1_fsm_state = ALARM_IDLE;
       }
+      
       if(rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
-
+      
         // Check if today is a day that the alarm should ring
         if(rtc_check_alarm_days(1)){
           alarm1_fsm_state = ALARM_VISUAL_RING;
-        }
+          }
         else{
-          #ifdef DEBUG
             Serial.println("Alarm rang but it's a weekend. Doing nothing.");
-          #endif
         }
       }
         
@@ -289,13 +288,7 @@ void loop() {
       break;
       
     case ALARM_VISUAL_RING:
-      #ifdef DEBUG
-        if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 10) ){
-      #endif
-      
-      #ifndef DEBUG
-        if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
-      #endif
+      if(rtc_get_seconds_since_alarm(alarm1) > (sunrise_duration_minutes * 60) ){
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
         
@@ -329,7 +322,7 @@ void loop() {
         strip.setBrightness(0);
         strip.show();
 
-        // Set the alarm for the same time tomorrow after it's acknowledged
+        // Set the alarm for the same time NEXTDAY after it's acknowledged
         alarm1 = alarm1 + TS_one_day;
         rtc_set_alarm(1,alarm1,alarm1days);
         
