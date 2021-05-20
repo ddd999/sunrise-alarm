@@ -33,8 +33,8 @@ void rtc_setup() {
   rtc.disableAlarm(1);
   rtc.disableAlarm(2);
 
-  if(alarm1set) rtc_set_alarm(1,alarm1);
-  if(alarm2set) rtc_set_alarm(2,alarm2);
+  if(alarm1set) rtc_set_alarm(1,alarm1,alarm1days);
+  if(alarm2set) rtc_set_alarm(2,alarm2,alarm2days);
 }
 
 void rtc_display_current_time() {

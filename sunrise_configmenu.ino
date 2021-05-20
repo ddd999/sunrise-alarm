@@ -224,7 +224,7 @@ if(!button_status.RELEASE){
     case ALARM1:
         alarm1 = DateTime(year,month,day,hour,minute,second);
         
-        rtc_set_alarm(1,alarm1);
+        rtc_set_alarm(1,alarm1,alarm1days);
         
         ss_write("AL 1",0);
         delay(700);
@@ -236,7 +236,7 @@ if(!button_status.RELEASE){
     case ALARM2:
         alarm2 = DateTime(year,month,day,hour,minute,second);
 
-        rtc_set_alarm(2,alarm2);
+        rtc_set_alarm(2,alarm2,alarm2days);
         
         ss_write("AL 2",0);
         delay(700);

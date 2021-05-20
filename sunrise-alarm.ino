@@ -202,12 +202,11 @@ void loop() {
       Serial.print("alarm2set: ");
       Serial.println(alarm2set);
       
-      sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second());
+      sprintf(alarmstring,"%2d:%02d:%02d %02d %02d %02d\t\t",alarm1.hour(),alarm1.minute(),alarm1.second(),alarm1.year(),alarm1.month(),alarm1.day());
       Serial.print("Alarm1 time: ");
-      Serial.println(alarmstring);
-      Serial.println(alarm1.year());
-      Serial.println(alarm1.month());
-      Serial.println(alarm1.day());
+      Serial.print(alarmstring);
+      Serial.print("Alarm2 days: ");
+      Serial.println(alarmdays[alarm2days]);
   
       sprintf(alarmstring,"%2d:%02d:%02d\t\t",alarm2.hour(),alarm2.minute(),alarm1.second());
       Serial.print("Alarm2 time: ");
@@ -262,7 +261,7 @@ void loop() {
     
     case ALARM_IDLE:
       if (alarm1set) {
-        rtc_set_alarm(1,alarm1);
+        rtc_set_alarm(1,alarm1,alarm1days);
         alarm1_fsm_state = ALARM_SET;
       }
       clear_button_flags();
@@ -325,7 +324,7 @@ void loop() {
 
         // Set the alarm for the same time tomorrow after it's acknowledged
         alarm1 = alarm1 + TS_one_day;
-        rtc_set_alarm(1,alarm1);
+        rtc_set_alarm(1,alarm1,alarm1days);
         
         alarm1_fsm_state = ALARM_SET;
 
@@ -356,7 +355,7 @@ void loop() {
         
        // Set the alarm for the same time tomorrow
         alarm1 = alarm1 + TS_one_day;
-        rtc_set_alarm(1,alarm1);
+        rtc_set_alarm(1,alarm1,alarm1days);
 
         alarm1_fsm_state = ALARM_SET;
 
