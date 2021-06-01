@@ -167,12 +167,13 @@ void menu_set_time(const uint8_t clockalarmsnooze){
   Serial.println(ledbufferbackup);
   
   DateTime now = rtc.now();
+
   uint16_t year;
   uint8_t month,day,hour,minute,second;
   
   year = now.year();
   month = now.month();
-  day = now.day();
+  bool tomorrow = 0;
   second = 0;
   
   uint8_t alarmdays = MONTOFRI;
@@ -207,7 +208,6 @@ if(button_status.PRESS){
 
   minute = get_minute(clockalarmsnooze);
 
-
   // Wait for the button to be released
 if(!button_status.RELEASE){
   while(1){
@@ -222,11 +222,11 @@ if(!button_status.RELEASE){
     // Get days only if we are setting an alarm
     if(clockalarmsnooze == ALARM1){
       alarm1days = get_alarm_days();
-      if(alarm1days == NEXTDAY) day +=1;
+      if(alarm1days == NEXTDAY) tomorrow = 1;
     }
     else if(clockalarmsnooze == ALARM2){
       alarm2days = get_alarm_days();
-      if(alarm2days == NEXTDAY) day +=1;
+      if(alarm2days == NEXTDAY) tomorrow = 1;
     }
 
   switch(clockalarmsnooze){
@@ -240,8 +240,13 @@ if(!button_status.RELEASE){
         ss_write(templedbuffer,COLON);
         delay(1200);
     break;
+    
     case ALARM1:
         alarm1 = DateTime(year,month,day,hour,minute,second);
+        
+        if(tomorrow){
+          alarm1 = alarm1 + TimeSpan(1,0,0,0);
+        }
         
         rtc_set_alarm(1,alarm1,alarm1days);
         
@@ -249,11 +254,15 @@ if(!button_status.RELEASE){
         delay(700);
         sprintf(templedbuffer, "%02d%02d", alarm1.hour(),alarm1.minute());
         ss_write(templedbuffer,COLON);
-        delay(700);
-    
+        delay(700);    
     break;
+    
     case ALARM2:
         alarm2 = DateTime(year,month,day,hour,minute,second);
+        
+        if(tomorrow){
+          alarm2 = alarm2 + TimeSpan(1,0,0,0);
+        }
 
         rtc_set_alarm(2,alarm2,alarm2days);
         
@@ -263,6 +272,7 @@ if(!button_status.RELEASE){
         ss_write(templedbuffer,COLON);
         delay(700);
     break;
+    
     case SNOOZE:
         snoozemin = minute;
         ss_write("SNoo",0);
@@ -274,7 +284,7 @@ if(!button_status.RELEASE){
   }
 
   UPDATE7SEG = 1;
-  
+
 }
 
 uint8_t get_hour(uint8_t clockalarmsnooze){
