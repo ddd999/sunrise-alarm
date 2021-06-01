@@ -69,6 +69,36 @@ void handleEvent(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   }
 }
 
+//
+// When the spinwheel is clicked and released, the following two functions will be run
+//
+//void onSpinWheelClicked(uint8_t /*pin*/, bool heldDown) {
+//    Serial.print("Encoder button pressed ");
+//    Serial.println(heldDown ? "Held" : "Pressed");
+////    button_status.CLICK = 1;
+//}
+//
+//void onSpinWheelButtonReleased(uint8_t /*pin*/, bool heldDown) {
+//    Serial.print("Encoder released - previously ");
+//    Serial.println(heldDown ? "Held" : "Pressed");
+//}
+
+//
+// Each time the encoder value changes, this function runs, as we registered it as a callback
+//
+void onEncoderChange(int newValue) {
+    // Encoder rotated clockwise
+    if(newValue > 0){
+      button_status.ENC_UP = 1;
+      button_status.ENC_DOWN = 0;
+    }
+    // Encoder rotated counter-clockwise
+    else if (newValue < 0){
+      button_status.ENC_UP = 0;
+      button_status.ENC_DOWN = 1;
+    }
+}
+
 void clear_button_flags(){
   button_status.PRESS        = 0;
   button_status.RELEASE      = 0;

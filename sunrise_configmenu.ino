@@ -28,8 +28,8 @@ void menu_loop(void){
   const long refreshinterval = 1000;
   
   // Timeout timer for exiting the menu after no user input
-  const uint8_t timeout = 20;
-  const uint8_t exitcountdown = 10;
+  const uint8_t timeout = 180;
+  const uint8_t exitcountdown = 30;
   uint8_t timeout_counter = timeout;
 
   uint8_t menu_selection = -1;
@@ -40,6 +40,7 @@ void menu_loop(void){
     // Check if any buttons have been pressed
     // Should be called every 4-5ms or faster, for the default debouncing time of ~20ms.
     button.check();
+    taskManager.runLoop();
 
 
     // Slow stuff here (update timeout counter)
@@ -76,9 +77,9 @@ void menu_loop(void){
 
     // Fast stuff here
     
-    // Go to the next menu selection if a click was detected
-    if(button_status.CLICK){
-      button_status.CLICK = 0;
+    // Go to the next menu selection if the encoder rotates clockwise
+    if(button_status.ENC_UP){
+      button_status.ENC_UP = 0;
     
       // Wrap around to the first item if we were already on the last item
       if(menu_selection == ( (sizeof(menu_options)/sizeof(menu_options[0])) - 1) ){
@@ -92,15 +93,31 @@ void menu_loop(void){
     
     }
 
+    // Go to the previous menu selection if the encoder rotates counter-clockwise
+    if(button_status.ENC_DOWN){
+      button_status.ENC_DOWN = 0;
+    
+      // Wrap around to the last item if we were already on the first item
+      if(menu_selection == 0){
+        menu_selection = 4;
+      }
+      else{
+        menu_selection--;
+      }
+    
+      ss_buff(menu_options[menu_selection]);
+    
+    }
+
     
      if(timeout_counter == 0){
       break;
      }
      
-    // Longpress = menu option selected
-    if(button_status.LONGPRESS){
+    // Click to select menu option
+    if(button_status.CLICK){
       timeout_counter = timeout;
-      button_status.LONGPRESS = 0;
+      button_status.CLICK = 0;
       
       if(menu_selection == MENU_EXIT) break;
       
@@ -284,16 +301,17 @@ uint8_t get_hour(uint8_t clockalarmsnooze){
   
   while(1){
     button.check();
+    taskManager.runLoop();
     
-    //Store the setting on long-press
-    if(button_status.LONGPRESS){
-      button_status.LONGPRESS = 0;
+    //Store the setting on click
+    if(button_status.CLICK){
+      button_status.CLICK = 0;
       break;
     }
     
     // Increment and display the hour on click
-    if(button_status.CLICK){
-      button_status.CLICK = 0;
+    if(button_status.ENC_UP){
+      button_status.ENC_UP = 0;
       
       if(hour == 23){
         hour = 0;
@@ -301,10 +319,23 @@ uint8_t get_hour(uint8_t clockalarmsnooze){
       else{
         hour++; 
       }
-      
       sprintf(templedbuffer,"%02dh ", hour);
       ss_write(templedbuffer,0);
     }
+    
+    if(button_status.ENC_DOWN){
+      button_status.ENC_DOWN = 0;
+      
+      if(hour == 0){
+        hour = 23;
+      }
+      else{
+        hour--; 
+      }
+      sprintf(templedbuffer,"%02dh ", hour);
+      ss_write(templedbuffer,0);
+    }
+     
   }
 
 
@@ -332,7 +363,7 @@ uint8_t get_minute(uint8_t clockalarmsnooze){
 
   // Save what was on the 7-segment display
   char templedbuffer[4];
-  uint8_t minute = 0;
+  int8_t minute = 0;
 
   // Set the initial minute to display according to what is being adjusted
   if (clockalarmsnooze == SNOOZE){
@@ -354,24 +385,36 @@ uint8_t get_minute(uint8_t clockalarmsnooze){
   
   while(1){
     button.check();
+    taskManager.runLoop();
 
-    //Store the setting on long-press
-    if(button_status.LONGPRESS){
-      button_status.LONGPRESS = 0;
+    //Store the setting on click
+    if(button_status.CLICK){
+      button_status.CLICK = 0;
       break;                       
     }
 
-    // Increment and display the hour on click
-                                                                                                  
-     if(button_status.CLICK){
-      button_status.CLICK = 0;
+    // Increment and display the hour on clockwise encoder rotation
+     if(button_status.ENC_UP){
+      button_status.ENC_UP = 0;
       minute += 1;
       
-      if (minute >= 60) minute = 0;
+      if (minute > 59) minute = 0;
       
       sprintf(templedbuffer,"  %02d", minute);
       ss_write(templedbuffer,COLON);
     }
+    
+    if(button_status.ENC_DOWN){
+      button_status.ENC_DOWN = 0;
+      minute -= 1;
+      
+      if (minute < 0) minute = 59;
+      
+      sprintf(templedbuffer,"  %02d", minute);
+      ss_write(templedbuffer,COLON);
+    }
+
+    
     
   }
 
@@ -412,14 +455,17 @@ uint8_t get_alarm_days(){
  
   while(1){
     button.check();
-      
-    if(button_status.LONGPRESS){
-      button_status.LONGPRESS = 0;
+    taskManager.runLoop();
+
+    // Save on click
+    if(button_status.CLICK){
+      button_status.CLICK = 0;
       break;
       }
 
-    if(button_status.CLICK){
-      button_status.CLICK = 0;
+    // Scroll up through the day options
+    if(button_status.ENC_UP){
+      button_status.ENC_UP = 0;
 
       if(day_options_counter <2){
         day_options_counter++;
@@ -427,9 +473,21 @@ uint8_t get_alarm_days(){
       else{
         day_options_counter = 0;
       }
-      
       ss_write(day_options[day_options_counter],0);
-      
+      }
+
+
+    // Scroll down through the day options
+    if(button_status.ENC_DOWN){
+      button_status.ENC_DOWN = 0;
+
+      if(day_options_counter > 0){
+        day_options_counter--;
+      }
+      else{
+        day_options_counter = 2;
+      }
+      ss_write(day_options[day_options_counter],0);
       }
 
   }

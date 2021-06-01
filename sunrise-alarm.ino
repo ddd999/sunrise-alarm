@@ -14,12 +14,26 @@ const uint8_t DISPLAY_ADDRESS1 = 0x71; //This is the default address of the Open
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <RTClib.h>
 
+// For using the rotary encoder
 #include <IoAbstraction.h>
 #include <IoAbstractionWire.h>
 #include <TaskManagerIO.h>
 
+// The pin onto which we connected the rotary encoders switch
+const int spinWheelClickPin = 2;
+
+// The two pins where we connected the A and B pins of the encoder. I recommend you dont change these
+// as the pin must support interrupts.
+const int encoderAPin = 0;
+const int encoderBPin = 1;
+
+// the maximum value (starting from 0) that we want the encoder to represent. This range is inclusive.
+const int maximumEncoderValue = 120;
+uint8_t currentEncoderValue = 60;
+uint8_t prevEncoderValue = 60;
+
 // create both an Arduino and an IO expander based IO abstraction
-IoAbstractionRef ioExpander = ioFrom8574(0x20);
+IoAbstractionRef ioExpander = ioFrom8574(0x20, 1);
 
 // For button event handling
 #include <AceButton.h>
@@ -27,7 +41,7 @@ using namespace ace_button;
 // One button wired to the pin at BUTTON_PIN. Automatically uses the default
 // ButtonConfig. The alternative is to call the AceButton::init() method in
 // setup() below.
-const int BUTTON_PIN = A0;
+const int BUTTON_PIN = A4;
 AceButton button(BUTTON_PIN);
 
 const int ALARM_TOGGLE_1 = 4; // P4 (pin 9) of PCF8574 chip
@@ -40,6 +54,8 @@ struct button_t {
   bool DOUBLECLICK  = 0;
   bool LONGPRESS    = 0;
   bool REPEATING    = 0;
+  bool ENC_UP       = 0;
+  bool ENC_DOWN       = 0;
 } button_status;
 
 // Digital output for audio trigger
@@ -50,7 +66,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 22, 8, 19, 0);
+DateTime alarm1 = DateTime(2021, 5, 31, 22, 32, 0);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime alarmstart;
 DateTime snoozestart;
@@ -134,6 +150,10 @@ void rtc_setup();
 void rtc_display_current_time();
 void lamp_update(void);
 
+void onSpinWheelClicked(uint8_t, bool);
+void onSpinWheelButtonReleased(uint8_t, bool);
+void onEncoderChange(int);
+
 void setup() {
 
   // Use serial port for debug messages
@@ -146,9 +166,6 @@ void setup() {
   rtc_setup();
 
   pinMode(LED_BUILTIN, OUTPUT);
-//  pinMode(AUDIO_TRIGGER_OUT, OUTPUT);
-  //digitalWrite(AUDIO_TRIGGER_OUT, HIGH);
-
     
   // if using the i2c IO expander we must make sure Wire is initialised.
   // This would not normally be done in library code, but by the callee.
@@ -164,6 +181,19 @@ void setup() {
   // Turn audio off immediately to prevent unwanted triggers
   ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
 
+  // Add Rotary encoder
+  // First we set up the switches library, giving it the task manager and tell it where the pins are located
+  // We could also of chosen IO through an i2c device that supports interrupts.
+  // the second parameter is a flag to use pull up switching, (true is pull up).
+  switches.initialiseInterrupt(ioExpander, true);
+  
+  // now we set up the rotary encoder, first we give the A pin and the B pin.
+  // we give the encoder a max value of 128, always minimum of 0.
+  setupRotaryEncoderWithInterrupt(encoderAPin, encoderBPin, onEncoderChange, HWACCEL_REGULAR, QUARTER_CYCLE);
+  
+  // Make it a direction-only encoder (gives +1 for clockwise, -1 for counter-clockwise)
+  switches.changeEncoderPrecision(0, 0);
+  
 }
 
 void loop() {
@@ -235,6 +265,7 @@ void loop() {
   // (for now, just the main pushbutton)
   // Should be called every 4-5ms or faster, for the default debouncing time of ~20ms.
   button.check();
+  taskManager.runLoop();
 
   
   // Check the i2c IO expander

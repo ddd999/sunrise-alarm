@@ -10,7 +10,7 @@ void rtc_setup() {
   }
 
   // Set date and time to the computer time at compilation
-//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
 
 //  if (rtc.lostPower()) {
 //    Serial.println("RTC lost power, let's set the time!");
@@ -21,7 +21,7 @@ void rtc_setup() {
 
   // This line sets the RTC with an explicit date & time, for example to set
   // January 21, 2014 at 3am you would call:
-  rtc.adjust(DateTime(2021, 5, 21, 8, 18, 55));
+//  rtc.adjust(DateTime(2021, 5, 21, 8, 18, 55));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();
