@@ -65,7 +65,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 5, 31, 22, 32, 0);
+DateTime alarm1 = DateTime(2021, 6, 1, 7, 0, 5);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime alarmstart;
 DateTime snoozestart;
@@ -265,12 +265,11 @@ void loop() {
   // Should be called every 4-5ms or faster, for the default debouncing time of ~20ms.
   button.check();
   taskManager.runLoop();
-
   
   // Check the i2c IO expander
   ioDeviceSync(ioExpander);
 
-  // here we read from the IO expander and write to serial.
+  // here we read from the IO expander.
   alarm1enable = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_1);
   alarm2enable = ioDeviceDigitalRead(ioExpander, ALARM_TOGGLE_2);
 
@@ -315,7 +314,7 @@ void loop() {
       break;
       
     case ALARM_VISUAL_RING:
-      if(rtc_get_seconds_since_alarm(alarmstart) > (sunrise_duration_minutes * 60) ){
+      if(rtc_get_seconds_since_alarm(alarmstart) >= (sunrise_duration_minutes * 60) ){
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
         

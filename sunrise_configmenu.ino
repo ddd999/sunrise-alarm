@@ -245,7 +245,7 @@ if(!button_status.RELEASE){
         alarm1 = DateTime(year,month,day,hour,minute,second);
         
         if(tomorrow){
-          alarm1 = alarm1 + TimeSpan(1,0,0,0);
+          alarm1 = alarm1 + TS_one_day;
         }
         
         rtc_set_alarm(1,alarm1,alarm1days);
@@ -261,7 +261,7 @@ if(!button_status.RELEASE){
         alarm2 = DateTime(year,month,day,hour,minute,second);
         
         if(tomorrow){
-          alarm2 = alarm2 + TimeSpan(1,0,0,0);
+          alarm2 = alarm2 + TS_one_day;
         }
 
         rtc_set_alarm(2,alarm2,alarm2days);
