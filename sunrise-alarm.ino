@@ -1,5 +1,4 @@
-// Sunrise Alarm Clock v0.001
-// May 19, 2021
+// Sunrise Alarm Clock v0.01
 
 #define DEBUG
 
