@@ -1,13 +1,12 @@
 void lamp_update(void) {
     
-  int brightnessValue = 0;
+  int ADC_Value = 0;
   uint8_t brightness = 0;
   
-  brightnessValue = analogRead(BRIGHTNESSPIN);
+  ADC_Value = analogRead(BRIGHTNESSPIN);
 
   // Convert the 10-bit analog result to an 8-bit integer
-  brightness = (uint8_t) (brightnessValue / 4);
-    
+  brightness = (uint8_t) (ADC_Value / 4);
  
   if (brightness >= 10){
     strip.setBrightness(brightness);

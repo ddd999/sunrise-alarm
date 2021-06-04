@@ -18,9 +18,6 @@ const uint8_t DISPLAY_ADDRESS1 = 0x71; //This is the default address of the Open
 #include <IoAbstractionWire.h>
 #include <TaskManagerIO.h>
 
-// The pin onto which we connected the rotary encoders switch
-const int spinWheelClickPin = 2;
-
 // The two pins where we connected the A and B pins of the encoder. I recommend you dont change these
 // as the pin must support interrupts.
 const int encoderAPin = 0;
@@ -37,14 +34,15 @@ IoAbstractionRef ioExpander = ioFrom8574(0x20, 1);
 // For button event handling
 #include <AceButton.h>
 using namespace ace_button;
-// One button wired to the pin at BUTTON_PIN. Automatically uses the default
+// One button wired to the pin at ENCODER_BUTTON. Automatically uses the default
 // ButtonConfig. The alternative is to call the AceButton::init() method in
 // setup() below.
-const int BUTTON_PIN = A4;
-AceButton button(BUTTON_PIN);
+const int ENCODER_BUTTON = A4;
+AceButton button(ENCODER_BUTTON);
 
 const int ALARM_TOGGLE_1 = 4; // P4 (pin 9) of PCF8574 chip
 const int ALARM_TOGGLE_2 = 5; // P5 (pin 10) of PCF8574 chip
+const int SNOOZE_BUTTON = 2; // P2 (pin 6) of PCF8574 chip
 
 struct button_t {
   bool PRESS        = 0;
@@ -77,6 +75,8 @@ char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursd
 
 uint8_t alarm1enable = 0;
 uint8_t alarm2enable = 0;
+bool snoozeflag = 0;
+bool snoozeheld = 0;
 
 uint16_t sunrise_duration_minutes = 1;
 uint8_t sunrise_led_colour, sunrise_led_brightness = 0;
@@ -93,7 +93,7 @@ const char *alarmdays_string[] = {
 uint8_t alarm1days = MONTOFRI;
 uint8_t alarm2days = MONTOFRI;
 
-uint8_t snoozemin = 10;
+uint8_t snoozemin = 1;
 uint8_t snoozecounter = 0;
 uint8_t snoozemaxtimes = 3;
 
@@ -124,7 +124,6 @@ const uint8_t led = 13;
 const uint8_t DATAPIN  = 7;
 const uint8_t CLOCKPIN = 8;
 
-
 // DotStar RGB LED setup
 const uint8_t NUMPIXELS = 1; // Number of LEDs in strip
 
@@ -149,12 +148,9 @@ void rtc_setup();
 void rtc_display_current_time();
 void lamp_update(void);
 
-void onSpinWheelClicked(uint8_t, bool);
-void onSpinWheelButtonReleased(uint8_t, bool);
-void onEncoderChange(int);
+//void onEncoderChange(int);
 
 void setup() {
-
   // Use serial port for debug messages
   Serial.begin(115200);
   
@@ -175,6 +171,10 @@ void setup() {
   ioDevicePinMode(ioExpander, ALARM_TOGGLE_1, INPUT);
   // Alarm Toggle 2
   ioDevicePinMode(ioExpander, ALARM_TOGGLE_2, INPUT);
+  // Snooze button
+  switches.initialise(ioExpander, true);
+  switches.addSwitch(SNOOZE_BUTTON, onSnoozeClicked);
+  
   // Audio Trigger
   ioDevicePinMode(ioExpander, AUDIO_TRIGGER_OUT, OUTPUT);
   // Turn audio off immediately to prevent unwanted triggers
@@ -199,7 +199,7 @@ void loop() {
 
   unsigned long currentMillis = millis();
 
-  char timestring[8], alarmstring[5];
+  char timestring[8], alarmstring[5], tempstring[6];
 
 
   // Update the output if it has been <interval> seconds since the last update
@@ -210,6 +210,18 @@ void loop() {
 
     // Update the clock display
     rtc_display_current_time(); 
+
+    float rtc_temperature = -273;
+    rtc_temperature = rtc.getTemperature();
+
+    sprintf(tempstring,"%.1f", rtc_temperature);
+    Serial.print("RTC Temperature: ");
+    Serial.println(tempstring);
+
+    if(snoozeheld){
+      snoozeheld = 0;
+      Serial.println("Snooze button held");
+    }
     
   #ifdef DEBUG
       DateTime now = rtc.now();
@@ -238,7 +250,6 @@ void loop() {
 
     if(alarm1_fsm_state == ALARM_AUDIO_RING){
       // Trigger audio
-      //digitalWrite(AUDIO_TRIGGER_OUT,LOW);
       ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, audioOn);
       #ifdef DEBUG
         Serial.println("AUDIO RING. TIME TO WAKE UP, SUCKER!");
@@ -314,7 +325,7 @@ void loop() {
       break;
       
     case ALARM_VISUAL_RING:
-      if(rtc_get_seconds_since_alarm(alarmstart) >= (sunrise_duration_minutes * 60) ){
+      if(rtc_get_seconds_since_alarm(alarmstart) >= (sunrise_duration_minutes * 10) ){
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
         
@@ -332,9 +343,10 @@ void loop() {
     break;
 
     case ALARM_AUDIO_RING:
-      
-      if(button_status.CLICK){
-        button_status.CLICK = 0;
+
+      // Start a snooze period if the snooze button was pressed
+      if(snoozeflag){
+        snoozeflag = 0;
 
         //Set a reference time for when the snooze button was pressed.
         snoozestart = rtc.now();
@@ -342,9 +354,12 @@ void loop() {
         if(snoozecounter <= snoozemaxtimes) alarm1_fsm_state = ALARM_SNOOZING;
         }
       
-      if(button_status.LONGPRESS){
-        button_status.LONGPRESS = 0;
-        
+//      if(button_status.LONGPRESS){
+//        button_status.LONGPRESS = 0;
+
+      if(snoozeheld){
+        snoozeheld = 0;
+                
         strip.setBrightness(0);
         strip.show();
 
@@ -380,9 +395,11 @@ void loop() {
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
 
-      if(button_status.LONGPRESS){
-        button_status.LONGPRESS = 0;
-        
+//      if(button_status.LONGPRESS){
+//        button_status.LONGPRESS = 0;
+
+      if(snoozeheld){
+        snoozeheld = 0;        
         strip.setBrightness(0);
         strip.show();
         

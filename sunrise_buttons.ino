@@ -1,6 +1,6 @@
 void button_setup() {
   // Button uses the built-in pull up register.
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(ENCODER_BUTTON, INPUT_PULLUP);
 
   // Configure the ButtonConfig with the event handler, and enable all higher
   // level events.
@@ -69,23 +69,22 @@ void handleEvent(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   }
 }
 
+// When the snooze button is clicked, this function will be run as we registered it as a callback
 //
-// When the spinwheel is clicked and released, the following two functions will be run
-//
-//void onSpinWheelClicked(uint8_t /*pin*/, bool heldDown) {
-//    Serial.print("Encoder button pressed ");
-//    Serial.println(heldDown ? "Held" : "Pressed");
-////    button_status.CLICK = 1;
-//}
-//
-//void onSpinWheelButtonReleased(uint8_t /*pin*/, bool heldDown) {
-//    Serial.print("Encoder released - previously ");
-//    Serial.println(heldDown ? "Held" : "Pressed");
-//}
+void onSnoozeClicked(pinid_t pin, bool heldDown) {
+  snoozeflag = 1;
+  if (heldDown) snoozeheld = 1;
+}
 
 //
-// Each time the encoder value changes, this function runs, as we registered it as a callback
+// When the repeat button is pressed, this function will be repeatedly called. It's also a callback
 //
+void onRepeatButtonClicked(pinid_t pin, bool heldDown) {
+  Serial.println("Repeat button pressed");
+}
+
+
+// Each time the encoder value changes, this function runs, as we registered it as a callback
 void onEncoderChange(int newValue) {
     // Encoder rotated clockwise
     if(newValue > 0){

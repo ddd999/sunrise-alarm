@@ -43,7 +43,7 @@ void led_visual_ring(DateTime alarmtime){
   float finish_temp = 3500;
   
   // Calculate the amount to change each second
-  float temp_step = (finish_temp - start_temp) / (sunrise_duration_minutes * 60);
+  float temp_step = (finish_temp - start_temp) / (sunrise_duration_minutes * 10);
   
   float current_temp = start_temp + (temp_step * seconds_since_alarm);
   if (current_temp >= finish_temp) current_temp = finish_temp;
