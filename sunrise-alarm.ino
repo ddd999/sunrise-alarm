@@ -63,7 +63,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 6, 1, 7, 0, 5);
+DateTime alarm1 = DateTime(2021, 6, 7, 21, 45, 5);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime alarmstart;
 DateTime snoozestart;
@@ -348,37 +348,38 @@ void loop() {
       if(snoozeflag){
         snoozeflag = 0;
 
+        // Turn the audio off, if we're still allowed to snooze
+        if (snoozecounter < snoozemaxtimes){
+        ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
+        }
+
         //Set a reference time for when the snooze button was pressed.
         snoozestart = rtc.now();
         snoozecounter += 1;
         if(snoozecounter <= snoozemaxtimes) alarm1_fsm_state = ALARM_SNOOZING;
         }
       
-//      if(button_status.LONGPRESS){
-//        button_status.LONGPRESS = 0;
-
       if(snoozeheld){
         snoozeheld = 0;
-                
+        
+        // Stop triggering audio
+        //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
+        ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
+               
         strip.setBrightness(0);
         strip.show();
 
-        
         // Set the alarm for the same time tomorrow
         // if it wasn't set only for a single day
-        if(alarm1days != NEXTDAY){        
+        if(alarm1days != NEXTDAY){
           // Set the alarm for the same time NEXTDAY after it's acknowledged
           alarm1 = alarm1 + TS_one_day;
           rtc_set_alarm(1,alarm1,alarm1days);
           alarm1_fsm_state = ALARM_SET;
-        }
+          }
         else{
           alarm1_fsm_state = ALARM_IDLE;
-        }
-
-        // Stop triggering audio
-        //digitalWrite(AUDIO_TRIGGER_OUT,HIGH);
-        ioDeviceDigitalWriteS(ioExpander, AUDIO_TRIGGER_OUT, !audioOn);
+          }
       }
       clear_button_flags();
       break;
@@ -394,9 +395,6 @@ void loop() {
         #endif
         alarm1_fsm_state = ALARM_AUDIO_RING;
       }
-
-//      if(button_status.LONGPRESS){
-//        button_status.LONGPRESS = 0;
 
       if(snoozeheld){
         snoozeheld = 0;        

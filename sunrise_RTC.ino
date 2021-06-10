@@ -9,8 +9,8 @@ void rtc_setup() {
     abort();
   }
 
-  // Set date and time to the computer time at compilation
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
+//  // Set date and time to the computer time at compilation
+//    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)) + TimeSpan(8));
 
   if (rtc.lostPower()) {
     Serial.println("RTC lost power, let's set the time!");
@@ -21,7 +21,7 @@ void rtc_setup() {
 
   // This line sets the RTC with an explicit date & time, for example to set
   // January 21, 2014 at 3am you would call:
-//  rtc.adjust(DateTime(2021, 6, 1, 7, 0, 0));
+  rtc.adjust(DateTime(2021, 6, 7, 21, 45, 0));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();
@@ -142,7 +142,7 @@ void alarm_snooze(){
     Serial.println(__func__);
     Serial.print("Snooze interval (s): ");
   
-    Serial.print(snoozemin * 60);
+    Serial.print(snoozemin * 10);
     Serial.print("\tSnooze counter: ");
     Serial.print(snoozecounter);
     Serial.print("\tMax snoozes: ");
@@ -155,8 +155,9 @@ void alarm_snooze(){
     Serial.print("Elapsed snooze time (s): ");
     Serial.println(timesnoozing);
   #endif
-  
-  if(timesnoozing >= (snoozemin * 60)) alarm1_fsm_state = ALARM_AUDIO_RING;
+
+  // Subtract 1 second from the counter because we want to finish at the beginning of the last second, not the end of it.
+  if(timesnoozing >= ( (snoozemin * 10) - 1) ) alarm1_fsm_state = ALARM_AUDIO_RING;
  
   return;
 }
