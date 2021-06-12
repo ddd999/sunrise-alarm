@@ -21,7 +21,7 @@ void rtc_setup() {
 
   // This line sets the RTC with an explicit date & time, for example to set
   // January 21, 2014 at 3am you would call:
-  rtc.adjust(DateTime(2021, 6, 7, 21, 45, 0));
+  rtc.adjust(DateTime(2021, 5, 31, 21, 45, 0));
 
   //we don't need the 32K Pin, so disable it
   rtc.disable32K();

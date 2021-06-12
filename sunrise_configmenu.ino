@@ -168,13 +168,15 @@ void menu_set_time(const uint8_t clockalarmsnooze){
   
   DateTime now = rtc.now();
 
-  uint16_t year;
-  uint8_t month,day,hour,minute,second;
-  
+  int16_t year;
+  int8_t month,day,hour,minute,second;
   year = now.year();
   month = now.month();
-  bool tomorrow = 0;
+  day = now.day();
+  minute = now.minute();
   second = 0;
+
+  bool alarm_tomorrow = 0;
   
   uint8_t alarmdays = MONTOFRI;
 
@@ -222,11 +224,11 @@ if(!button_status.RELEASE){
     // Get days only if we are setting an alarm
     if(clockalarmsnooze == ALARM1){
       alarm1days = get_alarm_days();
-      if(alarm1days == NEXTDAY) tomorrow = 1;
+      if(alarm1days == NEXTDAY) alarm_tomorrow = 1;
     }
     else if(clockalarmsnooze == ALARM2){
       alarm2days = get_alarm_days();
-      if(alarm2days == NEXTDAY) tomorrow = 1;
+      if(alarm2days == NEXTDAY) alarm_tomorrow = 1;
     }
 
   switch(clockalarmsnooze){
@@ -244,7 +246,7 @@ if(!button_status.RELEASE){
     case ALARM1:
         alarm1 = DateTime(year,month,day,hour,minute,second);
         
-        if(tomorrow){
+        if(alarm_tomorrow){
           alarm1 = alarm1 + TS_one_day;
         }
         
@@ -260,7 +262,7 @@ if(!button_status.RELEASE){
     case ALARM2:
         alarm2 = DateTime(year,month,day,hour,minute,second);
         
-        if(tomorrow){
+        if(alarm_tomorrow       ){
           alarm2 = alarm2 + TS_one_day;
         }
 
@@ -287,12 +289,12 @@ if(!button_status.RELEASE){
 
 }
 
-uint8_t get_hour(uint8_t clockalarmsnooze){
+int8_t get_hour(uint8_t clockalarmsnooze){
 
   Serial.println(__func__);
   
   char templedbuffer[4];
-  uint8_t hour = 0;
+  int8_t hour = 0;
 
   // Set the minute to the snooze time if we're adjusting the snooze
   if (clockalarmsnooze == ALARM1){
@@ -366,7 +368,7 @@ uint8_t get_hour(uint8_t clockalarmsnooze){
   return hour;
 }
 
-uint8_t get_minute(uint8_t clockalarmsnooze){
+int8_t get_minute(uint8_t clockalarmsnooze){
   Serial.println(__func__);
 
   // Loop for setting minute

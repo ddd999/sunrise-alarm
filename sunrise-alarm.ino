@@ -63,7 +63,7 @@ const int audioOn = LOW;
 #define BRIGHTNESSPIN A3
 
 RTC_DS3231 rtc;
-DateTime alarm1 = DateTime(2021, 6, 7, 21, 45, 5);
+DateTime alarm1 = DateTime(2021, 5, 31, 21, 50, 0);
 DateTime alarm2 = DateTime(2021, 2, 21, 20, 45, 0);
 DateTime alarmstart;
 DateTime snoozestart;
